@@ -1,4 +1,4 @@
-from flask import Flask, redirect, request,jsonify, session
+from flask import Flask, redirect, request,jsonify, session,render_template	
 import requests, os
 from urllib.parse import urlencode
 from dotenv import load_dotenv
@@ -18,6 +18,11 @@ TOKEN_URL = "https://accounts.spotify.com/api/token"
 SCOPE = "user-read-private user-read-email"
 
 @app.route('/')
+def index():
+    if "access_token" not in session:
+        return login()
+    return render_template("index.html")
+
 def login():
     query = urlencode({
         "client_id": CLIENT_ID,
@@ -96,6 +101,3 @@ def search():
     
 if __name__ == '__main__':
     app.run(port=3000)
-
-
-
