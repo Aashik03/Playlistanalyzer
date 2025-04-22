@@ -62,10 +62,40 @@ def profile():
 
     return jsonify(data)
 
-@app.route('/crazy')
-def crazy():
-    return ("<p>Crazy</p><h1>I was cray once, but now I am sane.</h1>")
+@app.route("/search")
+def search():
+    access_token = session.get("access_token")
+    if not access_token:
+        return redirect("/")
+
+    query = request.args.get("q", "blinding lights")  # default query
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    params = {
+        "q": query,
+        "type": "track",
+        "limit": 1
+    }
+
+    response = requests.get("https://api.spotify.com/v1/search", headers=headers, params=params)
+    data = response.json()
+
+    try:
+        track = data["tracks"]["items"][0]
+        return {
+            "song": track["name"],
+            "artist": track["artists"][0]["name"],
+            "preview_url": track["preview_url"],
+            "spotify_url": track["external_urls"]["spotify"]
+        }
+    except (IndexError, KeyError):
+        return {"error": "No track found!"}
+
     
 if __name__ == '__main__':
     app.run(port=3000)
+
+
 
