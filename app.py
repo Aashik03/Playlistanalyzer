@@ -73,7 +73,7 @@ def search():
     if not access_token:
         return redirect("/")
 
-    query = request.args.get("q", "blinding lights")  # default query
+    query = request.args.get("q", "blinding lights")
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
@@ -81,22 +81,25 @@ def search():
     params = {
         "q": query,
         "type": "track",
-        "limit": 1
+        "limit": 5  # Get multiple songs, not just one
     }
 
     response = requests.get("https://api.spotify.com/v1/search", headers=headers, params=params)
     data = response.json()
 
     try:
-        track = data["tracks"]["items"][0]
-        return {
-            "song": track["name"],
-            "artist": track["artists"][0]["name"],
-            "preview_url": track["preview_url"],
-            "spotify_url": track["external_urls"]["spotify"]
-        }
-    except (IndexError, KeyError):
-        return {"error": "No track found!"}
+        tracks = data["tracks"]["items"]
+        results = []
+        for track in tracks:
+            results.append({
+                "song": track["name"],
+                "artist": track["artists"][0]["name"],
+                "preview_url": track["preview_url"],
+                "spotify_url": track["external_urls"]["spotify"]
+            })
+        return jsonify({"results": results})  # <==== VERY IMPORTANT
+    except (KeyError, IndexError):
+        return jsonify({"results": []})  # <=== still return an empty list if error
 
     
 if __name__ == '__main__':

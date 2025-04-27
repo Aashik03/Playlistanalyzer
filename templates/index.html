@@ -1,48 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Song Search</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            max-width: 600px;
-            margin: 2rem auto;
-            text-align: center;
-            background-color: pink;
-        }
-        input, button {
-            padding: 10px;
-            margin: 5px;
-            font-size: 1rem;
-        }
-        #result {
-            margin-top: 2rem;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding-top: 20%;
-        }
-        button{
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-    <h1>Search a Song </h1>
-  <form id="searchForm">
-    <input type="text" id="query" placeholder="Type a song" required>
-    <button type="submit">Search</button>
-  </form>
-  <div id="result"></div>
-  </div>
 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Song Search</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      text-align: center;
+      background-color: pink;
+    }
+
+    input,
+    button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 1rem;
+    }
+
+    #result {
+      margin-top: 2rem;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-top: 20%;
+    }
+
+    button {
+      border-radius: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Search a Song </h1>
+    <form id="searchForm">
+      <input type="text" id="query" placeholder="Type a song" required>
+      <button type="submit">Search</button>
+    </form>
+    <div id="result"></div>
+  </div>
   <script>
+
     const form = document.getElementById("searchForm");
     const resultDiv = document.getElementById("result");
 
@@ -56,13 +63,16 @@
       if (data.error) {
         resultDiv.innerHTML = `<p>${data.error}</p>`;
       } else {
-        resultDiv.innerHTML = `
-          <h3>${data.song} - ${data.artist}</h3>
-          ${data.preview_url ? `<audio controls src="${data.preview_url}"></audio>` : '<p>No preview available</p>'}
-          <p><a href="${data.spotify_url}" target="_blank">Listen on Spotify</a></p>
-        `;
+        resultDiv.innerHTML = data.results.map(track => `
+      <div style="margin-bottom: 20px;">
+        <h3>${track.song} - ${track.artist}</h3>
+        ${track.preview_url ? `<audio controls src="${track.preview_url}"></audio>` : '<p>No preview available</p>'}
+        <p><a href="${track.spotify_url}" target="_blank">Listen on Spotify</a></p>
+      </div>
+    `).join('');
       }
     });
   </script>
 </body>
+
 </html>
