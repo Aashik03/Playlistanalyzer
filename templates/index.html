@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--DOCTYPE html-->
 <html lang="en">
 
 <head>
@@ -36,6 +36,27 @@
     button {
       border-radius: 5px;
     }
+
+    .fade-in {
+      animation: fadeIn 0.6s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #loading {
+      display: none;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 
@@ -46,32 +67,88 @@
       <input type="text" id="query" placeholder="Type a song" required>
       <button type="submit">Search</button>
     </form>
+    <div id="loading">Loading...</div>
     <div id="result"></div>
+    <h2>Or Search a playlist</h2>
+    <form id="playlistForm">
+      <input type="text" id="playlistQuery" placeholder="Type an artist or a playlist" required>
+      <button type="submit">Search</button>
+    </form>
+    <div id="playlistResult"></div>
   </div>
-  <script>
 
+  <script>
     const form = document.getElementById("searchForm");
     const resultDiv = document.getElementById("result");
+    const loadingDiv = document.getElementById("loading");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const query = document.getElementById("query").value;
 
-      const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      loadingDiv.style.display = "block";  // Show Loading
+      resultDiv.innerHTML = "";             // Clear previous results
 
-      if (data.error) {
-        resultDiv.innerHTML = `<p>${data.error}</p>`;
-      } else {
-        resultDiv.innerHTML = data.results.map(track => `
-      <div style="margin-bottom: 20px;">
-        <h3>${track.song} - ${track.artist}</h3>
-        ${track.preview_url ? `<audio controls src="${track.preview_url}"></audio>` : '<p>No preview available</p>'}
-        <p><a href="${track.spotify_url}" target="_blank">Listen on Spotify</a></p>
+      try {
+        const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+
+        if (data.error) {
+          resultDiv.innerHTML = `<p>${data.error}</p>`;
+        } 
+        else if(data.length===0){
+          resultDiv.innerHTML=`<p>No results found for "${query}"</p>`;
+        }
+        else {
+          resultDiv.innerHTML = ""; // Just in case
+          data.forEach(track => {
+            const songDiv = document.createElement("div");
+            songDiv.classList.add("fade-in");
+            songDiv.style.marginBottom = "20px";
+
+            songDiv.innerHTML = `
+          <h3>${track.song} - ${track.artist}</h3>
+          ${track.preview_url ?
+                `<audio controls src="${track.preview_url}"></audio>` :
+                `<p>Preview not available. <a href="${track.spotify_url}" target="_blank">Explore on Spotify</a></p>`
+              }
+        `;
+            resultDiv.appendChild(songDiv);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        resultDiv.innerHTML = `<p>Something went wrong </p>`;
+      } finally {
+        loadingDiv.style.display = "none"; // Always hide Loading
+      }
+    });
+
+    const playlistForm=document.getElementById("playlistForm");	
+    const playlistResultDiv=document.getElementById("playlistResult");
+
+    playlistForm.addEventListener("submit",async (e)=>{
+      e.preventDefault();
+      
+      const query = document.getElementById("playlistQuery").value;
+
+      const res= await fetch(`/search_playlist?q=${encodeURIComponent(query)}`);	
+      const data=await res.json();
+
+      if (data.error){
+        playlistResultDiv.innerHTML=`<p>${data.error}</p>`;
+      }else{
+        playlistResultDiv.innerHTML=data.map(playlist=>`
+        <div style="margin-bottom: 20px;">
+        <h3>${playlist.name}</h3>
+        <p>${playlist.description}</p>
+        ${playlist.image ? `<img src="${playlist.image}" alt="Playlist cover" style="width:200px;">` : ''}
+        <p><a href="${playlist.url}" target="_blank">View Playlist on Spotify</a></p>
       </div>
     `).join('');
       }
     });
+
   </script>
 </body>
 
