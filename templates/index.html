@@ -75,6 +75,11 @@
       <button type="submit">Search</button>
     </form>
     <div id="playlistResult"></div>
+    <h2>Playlist Analyzer</h2>
+  <input type="text" id="playlistId" placeholder="Enter Playlist ID" required />
+  <button onclick="analyze()">Analyze</button>
+  <div id="analysisResult"></div>
+    
   </div>
 
   <script>
@@ -100,7 +105,7 @@
           resultDiv.innerHTML=`<p>No results found for "${query}"</p>`;
         }
         else {
-          resultDiv.innerHTML = ""; // Just in case
+          resultDiv.innerHTML = ""; 
           data.forEach(track => {
             const songDiv = document.createElement("div");
             songDiv.classList.add("fade-in");
@@ -138,16 +143,57 @@
       if (data.error){
         playlistResultDiv.innerHTML=`<p>${data.error}</p>`;
       }else{
-        playlistResultDiv.innerHTML=data.map(playlist=>`
-        <div style="margin-bottom: 20px;">
-        <h3>${playlist.name}</h3>
-        <p>${playlist.description}</p>
-        ${playlist.image ? `<img src="${playlist.image}" alt="Playlist cover" style="width:200px;">` : ''}
-        <p><a href="${playlist.url}" target="_blank">View Playlist on Spotify</a></p>
-      </div>
-    `).join('');
+        playlistResultDiv.innerHTML = data.map(playlist => {
+  const playlistId = playlist.url.split("/playlist/")[1].split("?")[0]; // extract ID from URL
+  return `
+    <div style="margin-bottom: 20px;">
+      <h3>${playlist.name}</h3>
+      <p>${playlist.description}</p>
+      ${playlist.image ? `<img src="${playlist.image}" alt="Playlist cover" style="width:200px;">` : ''}
+      <p><a href="${playlist.url}" target="_blank">View on Spotify</a></p>
+      <button onclick="fillPlaylistId('${playlistId}')">Analyze This Playlist</button>
+    </div>
+  `;
+}).join('');
+
       }
     });
+
+    function fillPlaylistId(id) {
+  document.getElementById("playlistId").value = id;
+  document.getElementById("playlistId").scrollIntoView({ behavior: 'smooth' });
+}
+
+
+  async function analyze() {
+  const playlistId = document.getElementById("playlistId").value;
+  const analysisDiv = document.getElementById("analysisResult");
+
+  if (!playlistId) {
+    analysisDiv.innerHTML = "<p>Please enter a playlist ID.</p>";
+    return;
+  }
+
+  const res = await fetch(`/analyze_features?id=${encodeURIComponent(playlistId)}`);
+  const data = await res.json();
+
+  if (data.error) {
+    analysisDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+  } else {
+    analysisDiv.innerHTML = `
+      <ul style="list-style-type: none; padding: 0;">
+        <li><strong>Tracks Analyzed:</strong> ${data.total_tracks_analyzed}</li>
+        <li><strong>Danceability:</strong> ${data.average_danceability}</li>
+        <li><strong>Energy:</strong> ${data.average_energy}</li>
+        <li><strong>Mood (Valence):</strong> ${data.average_valence}</li>
+        <li><strong>Tempo:</strong> ${data.average_tempo} BPM</li>
+        <li><strong>Acousticness:</strong> ${data.average_acousticness}</li>
+        <li><strong>Instrumentalness:</strong> ${data.average_instrumentalness}</li>
+      </ul>
+    `;
+  }
+}
+
 
   </script>
 </body>
